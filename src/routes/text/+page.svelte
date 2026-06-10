@@ -700,7 +700,7 @@
                     <div
                         class="p-2 w-full"
                         style="position: absolute; left: {-draggableWidth}px; clip-path: inset(0 0 0 {draggableWidth -
-                            x.current}px);"
+                            x.current}px"
                     >
                         <main>
                             <div class="max-w-screen-md mx-auto">
@@ -844,19 +844,10 @@
         <!-- TODO: CHECK THAT THIS IS CORRECT, CHANGED FROM INSIDE ABOVE DIV-->
     </div>
 
-    {#if showCollectionViewer && enoughCollections}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-            class="absolute dy-badge dy-badge-outline dy-badge-md rounded-xs p-1 inset-e-3 m-1"
-            style:top={navBarHeight}
-            style={convertStyle($s?.['ui.pane1.name'])}
-            onclick={() => goto(resolve(`/layout`))}
-        >
-            {scriptureConfig.bookCollections?.find((x) => x.id === $refs.collection)
-                ?.collectionAbbreviation}
-        </div>
-    {/if}
+    <!-- Display pop-ups for cross-references, footnotes, etc. -->
+    <StackView {...stackSettings} />
+    <!-- TODO: CHECK THAT THIS IS CORRECT, CHANGED FROM INSIDE ABOVE DIV-->
+
     {#if textCopied}
         <div
             class="flex h-12 p-2 bg-black text-white items-center justify-center text-center text-sm"
