@@ -145,179 +145,41 @@
     let startX = 0;
     let isDragging = $state(false);
     let draggableWidth = $state(0);
-    let panels_X = $state([0, 0, 0]);
-    let minSlideDistance = () => draggableWidth / 2; // use to determine how far a user has to slide to move to the next chapter
-    let minSlideMomentum = 1; // measured in pixels per millisecond
-    let lastX = 0;
-    let lastTime = 0;
-    let momentum = 0;
-    let maxMomentum = 0;
-    let previous: string | null = null;
-    let transitionDone = true;
+    let minSlideDistance = () => draggableWidth / 3; // use to determine how far a user has to slide to move to the next chapter
 
-    $effect(() => {
-        if (previous !== viewSettings.references!.collection) {
-            setupSettingsCache();
-        }
-        previous = viewSettings.references!.collection;
-    });
-
-    async function setupSettingsCache() {
-        settingsCache[0] = {
-            // Initial settings for left panel
-            ...viewSettings,
-            highlights: Promise.resolve([]),
-            references: {
-                ...viewSettings.references,
-                book: viewSettings.references!.prev.book,
-                chapter: viewSettings.references!.prev.chapter
-            }
-        };
-
-        settingsCache[1] = {
-            // Initial settings for center panel
-            ...viewSettings
-        };
-
-        settingsCache[2] = {
-            // Initial settings for right panel
-            ...viewSettings,
-            highlights: Promise.resolve([]),
-            references: {
-                ...viewSettings.references,
-                book: viewSettings.references!.next.book,
-                chapter: viewSettings.references!.next.chapter
-            }
-        };
-        panels_X[0] = -draggableWidth;
-        panels_X[1] = 0;
-        panels_X[2] = draggableWidth;
-    }
-
-    async function adjustSettingsCache(direction: number) {
-        let idx;
-        adjustPanelX(0, direction);
-        adjustPanelX(1, direction);
-        adjustPanelX(2, direction);
-        if (direction === -1) {
-            panels_X = [panels_X[1], panels_X[2], panels_X[0]];
-            idx = panels_X.indexOf(Math.min(...panels_X));
-            settingsCache[idx] = {
-                ...viewSettings, // load in the page before
-                highlights: Promise.resolve([]),
-                references: {
-                    ...viewSettings.references,
-                    book: viewSettings.references!.prev.book,
-                    chapter: viewSettings.references!.prev.chapter
-                }
-            };
-        } else if (direction === 1) {
-            panels_X = [panels_X[2], panels_X[0], panels_X[1]];
-            idx = panels_X.indexOf(Math.max(...panels_X));
-            settingsCache[idx] = {
-                ...viewSettings, // load in the next page
-                highlights: Promise.resolve([]),
-                references: {
-                    ...viewSettings.references,
-                    book: viewSettings.references!.next.book,
-                    chapter: viewSettings.references!.next.chapter
-                }
-            };
-        }
-        idx = panels_X.indexOf(0);
-        settingsCache[idx].highlights = viewSettings.highlights;
-    }
-
-    $effect(() => {
-        const highlights = viewSettings.highlights;
-
-        // untrack prevents these reads from becoming dependencies
-        untrack(() => {
-            if (x.current === 0 && transitionDone) {
-                const idx = panels_X.indexOf(0);
-                settingsCache[idx].highlights = highlights;
-            }
-        });
-    });
-
-    async function adjustPanelX(panelX: number, direction: number) {
-        if (Math.abs(panels_X[panelX]) > draggableWidth) {
-            // this panel needs to be rotated to the other side and reloaded with a new page content
-            if (direction === -1) {
-                panels_X[panelX] = draggableWidth;
-            } else {
-                panels_X[panelX] = -draggableWidth;
-            }
-        }
-    }
-
-    async function handleMouseUp(_event: PointerEvent) {
+    async function handleMouseUp(_event: any) {
+        console.log('MOUSE UP');
         isDragging = false;
-        if (Math.abs(x.current) < minSlideDistance() && Math.abs(momentum) < minSlideMomentum) {
-            momentum = 0;
-            maxMomentum = 0;
-            x.set(0, { duration: Math.abs(x.current) });
+        if (Math.abs(x.current) < minSlideDistance()) {
+            x.set(0);
             return;
         } else if (x.current < 0) {
-            momentum = 0;
-            maxMomentum = 0;
-            if (!(hasNext && navigateBetweenBooksNext)) {
-                x.set(0, { duration: Math.abs(x.current) });
-                return;
-            }
-            await navigateToTextChapterInDirection(1);
-            await adjustSettingsCache(1);
-            await x.set(draggableWidth + x.current, { duration: 1 });
-            await tick();
-            await x.set(0, { duration: Math.abs(x.current) });
+            await x.set(-draggableWidth);
+            navigateToTextChapterInDirection(1);
+            x.set(0, { duration: 0 });
         } else {
-            momentum = 0;
-            maxMomentum = 0;
-            if (!(hasPrev && navigateBetweenBooksPrev)) {
-                x.set(0, { duration: Math.abs(x.current) });
-                return;
-            }
-            await navigateToTextChapterInDirection(-1);
-            await adjustSettingsCache(-1);
-            await x.set(-draggableWidth + x.current, { duration: 1 });
-            await tick();
-            await x.set(0, { duration: Math.abs(x.current) });
+            await x.set(draggableWidth);
+            navigateToTextChapterInDirection(-1);
+            x.set(0, { duration: 0 });
         }
     }
 
-    function handleMouseDown(event: PointerEvent) {
-        if (navigateBetweenBooksPrev || navigateBetweenBooksNext) {
+    function handleMouseDown(event: { clientX: number }) {
+        console.log('MOUSE DOWN');
+        if (swipeBetweenBooks) {
             isDragging = true;
             startX = event.clientX - x.current;
-            lastTime = performance.now();
         }
     }
 
-    function handleMouseMove(event: PointerEvent) {
+    function handleMouseMove(event: { clientX: number }) {
         if (isDragging) {
-            let delta = event.clientX - startX;
-            x.set(delta, { duration: 0 });
-            if (x.current > 0 && !(hasPrev && navigateBetweenBooksPrev)) {
-                x.set(0, { duration: 0 });
-                return;
-            } else if (x.current < 0 && !(hasNext && navigateBetweenBooksNext)) {
-                x.set(0, { duration: 0 });
-                return;
-            } else if (x.current > draggableWidth) {
+            x.set(event.clientX - startX, { duration: 0 });
+            if (x.current > draggableWidth) {
                 x.set(draggableWidth, { duration: 0 });
             } else if (x.current < -draggableWidth) {
                 x.set(-draggableWidth, { duration: 0 });
             }
-            const currentTime = performance.now();
-
-            const deltaX = x.current - lastX;
-            const deltaT = currentTime - lastTime;
-
-            momentum = deltaX / deltaT;
-            maxMomentum = Math.max(momentum, maxMomentum);
-
-            lastTime = currentTime;
-            lastX = x.current;
         }
     }
 
@@ -354,22 +216,14 @@
     const barType = 'book';
 
     async function prevChapter() {
-        transitionDone = false;
+        await x.set(draggableWidth);
         await navigateToTextChapterInDirection(-1);
-        await adjustSettingsCache(-1);
-        await x.set(-draggableWidth, { duration: 0 });
-        await tick();
-        await x.set(0);
-        transitionDone = true;
+        x.set(0, { duration: 0 });
     }
     async function nextChapter() {
-        transitionDone = false;
+        await x.set(-draggableWidth);
         await navigateToTextChapterInDirection(1);
-        await adjustSettingsCache(1);
-        await x.set(draggableWidth, { duration: 0 });
-        await tick();
-        await x.set(0);
-        transitionDone = true;
+        x.set(0, { duration: 0 });
     }
 
     const navigateBetweenBooksPrev = $derived(swipeBetweenBooks || $refs.prev.book === $refs.book);
@@ -475,37 +329,25 @@
               : {}
     );
 
-    const settings0 = $derived({
-        // Initial settings for left panel
+    const prevSettings = $derived({
+        // save the info to load in the previous page settings
         ...viewSettings,
-        highlights: Promise.resolve([]),
         references: {
             ...viewSettings.references,
-            book: viewSettings.references!.prev.book,
-            chapter: viewSettings.references!.prev.chapter
+            book: viewSettings.references.prev.book,
+            chapter: viewSettings.references.prev.chapter
         }
     });
 
-    const settings1 = $derived({
-        // Initial settings for center panel
-        ...viewSettings
-    });
-
-    const settings2 = $derived({
-        // Initial settings for right panel
+    const nextSettings = $derived({
+        // save the info to load in the next page settings
         ...viewSettings,
-        highlights: Promise.resolve([]),
         references: {
             ...viewSettings.references,
-            book: viewSettings.references!.next.book,
-            chapter: viewSettings.references!.next.chapter
+            book: viewSettings.references.next.book,
+            chapter: viewSettings.references.next.chapter
         }
     });
-
-    let settingsCache = $state(
-        // svelte-ignore state_referenced_locally
-        [settings0, settings1, settings2]
-    );
 
     function getFormat(bcId: string, bookId: string) {
         return scriptureConfig.bookCollections
@@ -715,7 +557,6 @@
 <svelte:window
     bind:innerWidth
     bind:innerHeight
-    // bind:visualViewport?.height={}
     onpointermove={handleMouseMove}
     onpointerup={handleMouseUp}
 />
@@ -853,18 +694,30 @@
                 </div>
                 <div
                     class="basis-5/6 max-w-screen-md"
-                    style="position: relative; left: {x.current}px; height: {window.screen
-                        .height}px"
+                    style="position: relative; left: {x.current}px"
                     use:measure
                 >
                     <div
-                        class="p-2 w-full overflow-y-hidden"
-                        style="position: absolute; left: {panels_X[0]}px; height: {Math.abs(
-                            panels_X[0] + x.current
-                        ) === draggableWidth
-                            ? window.screen.height
-                            : 'auto'}px; clip-path: inset(0 {1 * panels_X[0] + x.current}px 0 {-1 *
-                            panels_X[0] -
+                        class="p-2 w-full"
+                        style="position: absolute; left: {-draggableWidth}px; clip-path: inset(0 0 0 {draggableWidth -
+                            x.current}px);"
+                    >
+                        <main>
+                            <div class="max-w-screen-md mx-auto">
+                                {#if format === 'html'}
+                                    <HtmlBookView {...prevSettings as HtmlBookViewProps} />
+                                {:else}
+                                    <ScriptureViewSofria
+                                        {...prevSettings as ScriptureViewSofriaProps}
+                                    />
+                                {/if}
+                            </div>
+                        </main>
+                    </div>
+
+                    <div
+                        class="p-2 w-full"
+                        style="position: absolute; clip-path: inset(0 {x.current}px 0 {0 -
                             x.current}px);"
                     >
                         <main>
@@ -876,6 +729,11 @@
                                 onpointerdown={handleMouseDown}
                                 use:pinch
                                 onpinch={doPinch}
+                                use:swipe={{
+                                    timeframe: 300,
+                                    minSwipeDistance: 60,
+                                    touchAction: 'pan-y'
+                                }}
                             >
                                 {#if book?.format === 'html'}
                                     <HtmlBookView {...settingsCache[0] as HtmlBookViewProps} />
@@ -944,6 +802,24 @@
                                 {:else if book?.testament !== 'quiz'}
                                     <ScriptureViewSofria
                                         {...settingsCache[2] as ScriptureViewSofriaProps}
+                                    />
+                                {/if}
+                            </div>
+                        </main>
+                    </div>
+
+                    <div
+                        class="p-2 w-full"
+                        style="position: absolute; left: {draggableWidth}px; clip-path: inset(0 {draggableWidth +
+                            x.current}px 0 0);"
+                    >
+                        <main>
+                            <div class="max-w-screen-md mx-auto">
+                                {#if format === 'html'}
+                                    <HtmlBookView {...nextSettings as HtmlBookViewProps} />
+                                {:else}
+                                    <ScriptureViewSofria
+                                        {...nextSettings as ScriptureViewSofriaProps}
                                     />
                                 {/if}
                             </div>
