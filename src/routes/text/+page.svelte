@@ -797,8 +797,8 @@
         {/if}
         <!-- <div class="overflow-y-auto grow" bind:this={scrollingDiv} onscroll={saveScrollPosition}> -->
         <div
-            style="--borderImageSource: url({borders['./border.png']});"
-            class:borderimg={showBorder}
+            // style="--borderImageSource: url({borders['./border.png']});"
+            // class:borderimg={showBorder}
             class="overflow-y-auto grow overflow-x-hidden"
             bind:this={scrollingDiv}
             onscroll={saveScrollPosition}
@@ -861,6 +861,8 @@
                     >
                         <main>
                             <div
+                                style="--borderImageSource: url({borders['./border.png']});"
+                                class:borderimg={showBorder}
                                 aria-hidden="true"
                                 class="max-w-screen-md mx-auto"
                                 onpointerdown={handleMouseDown}
