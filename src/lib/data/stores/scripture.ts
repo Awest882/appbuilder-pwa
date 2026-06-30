@@ -232,6 +232,7 @@ function createSelectedVerses() {
             const newVerseNumber = Number(id);
             const newIndex = getInsertIndex(newVerseNumber, selections);
             selections.splice(newIndex, 0, selection);
+            console.log(selections);
             external.set(selections);
         },
         removeVerse: (id: string | number) => {
