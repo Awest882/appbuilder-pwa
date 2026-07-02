@@ -5,7 +5,6 @@ export function onClickText(e: any, selectedVerses: any, maxSelections: any) {
     while (!isSelectableText(target) && !isClickableText(target) && !isMain(target)) {
         target = target.parentNode;
     }
-    console.log(target);
     if (isSelectableText(target)) {
         const id = removeIdSuffixes(target.id);
         if (!target.classList.contains('selected')) {
@@ -20,6 +19,7 @@ export function onClickText(e: any, selectedVerses: any, maxSelections: any) {
         } else {
             selectedVerses.removeVerse(id);
         }
+        console.log(selectedVerses.getVerseByIndex(0));
     }
 }
 export function updateSelections(element: HTMLElement, selections: any) {
