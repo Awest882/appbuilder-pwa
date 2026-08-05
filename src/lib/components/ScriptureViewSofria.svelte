@@ -1436,7 +1436,6 @@ LOGGING:
     }
     // handles on click when interacting with the scripture view
     function onClick(e: any) {
-        console.log(e.target);
         switch (e.target.getAttribute('class')) {
             case 'v':
                 audioClickHandler(e);
@@ -1491,6 +1490,10 @@ LOGGING:
         for (var i = 0; i < els.length; i++) {
             if (hasClickableClass(els[i])) {
                 if (!els[i].onclick) {
+<<<<<<< HEAD
+=======
+                    els[i].removeEventListener('click', onClick);
+>>>>>>> 260dbdb (Adjustments after merge)
                     els[i].addEventListener('click', onClick, false);
                 }
             }
