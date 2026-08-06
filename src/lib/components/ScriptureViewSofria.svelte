@@ -1490,10 +1490,6 @@ LOGGING:
         for (var i = 0; i < els.length; i++) {
             if (hasClickableClass(els[i])) {
                 if (!els[i].onclick) {
-<<<<<<< HEAD
-=======
-                    els[i].removeEventListener('click', onClick);
->>>>>>> 260dbdb (Adjustments after merge)
                     els[i].addEventListener('click', onClick, false);
                 }
             }
