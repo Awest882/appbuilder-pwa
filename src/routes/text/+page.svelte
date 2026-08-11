@@ -251,38 +251,31 @@
         }
     }
 
+    async function handlePointerCancel(_e: PointerEvent) {
+        await x.set(0, { duration: Math.abs(x.current) });
+    }
+
     async function handleMouseUp(_event: PointerEvent) {
         isDragging = false;
-        if (Math.abs(x.current) < minSlideDistance() && Math.abs(momentum) < minSlideMomentum) {
-            momentum = 0;
-            maxMomentum = 0;
-            x.set(0, { duration: Math.abs(x.current) });
-            return;
-        } else if (x.current < 0) {
-            momentum = 0;
-            maxMomentum = 0;
-            if (!(hasNext && navigateBetweenBooksNext)) {
-                x.set(0, { duration: Math.abs(x.current) });
-                return;
+        if (!(Math.abs(x.current) < minSlideDistance() && Math.abs(momentum) < minSlideMomentum)) {
+            if (x.current < 0) {
+                if (hasNext && navigateBetweenBooksNext) {
+                    await navigateToTextChapterInDirection(1);
+                    await adjustSettingsCache(1);
+                    await x.set(draggableWidth + x.current, { duration: 1 });
+                }
+            } else {
+                if (hasPrev && navigateBetweenBooksPrev) {
+                    await navigateToTextChapterInDirection(-1);
+                    await adjustSettingsCache(-1);
+                    await x.set(-draggableWidth + x.current, { duration: 1 });
+                }
             }
-            await navigateToTextChapterInDirection(1);
-            await adjustSettingsCache(1);
-            await x.set(draggableWidth + x.current, { duration: 1 });
             await tick();
-            await x.set(0, { duration: Math.abs(x.current) });
-        } else {
-            momentum = 0;
-            maxMomentum = 0;
-            if (!(hasPrev && navigateBetweenBooksPrev)) {
-                x.set(0, { duration: Math.abs(x.current) });
-                return;
-            }
-            await navigateToTextChapterInDirection(-1);
-            await adjustSettingsCache(-1);
-            await x.set(-draggableWidth + x.current, { duration: 1 });
-            await tick();
-            await x.set(0, { duration: Math.abs(x.current) });
         }
+        momentum = 0;
+        maxMomentum = 0;
+        await x.set(0, { duration: Math.abs(x.current) });
     }
 
     function handleMouseDown(event: PointerEvent) {
@@ -718,9 +711,10 @@
     // bind:visualViewport?.height={}
     onpointermove={handleMouseMove}
     onpointerup={handleMouseUp}
+    onpointercancel={handlePointerCancel}
 />
 
-<div class="grid grid-rows-[auto,1fr,auto]" style="height:100vh;height:100dvh;">
+<div class="grid grid-rows-[auto_1fr_auto]" style="height:100vh;height:100dvh;">
     <div class="navbar">
         <Navbar {backNavigation} {showBackButton}>
             {#snippet start()}
@@ -859,11 +853,11 @@
                 >
                     <div
                         class="p-2 w-full overflow-y-hidden"
-                        style="position: absolute; left: {panels_X[0]}px; height: {Math.abs(
+                        style="position: absolute; left: {panels_X[0]}px; display: {Math.abs(
                             panels_X[0] + x.current
                         ) === draggableWidth
-                            ? window.screen.height
-                            : 'auto'}px; clip-path: inset(0 {1 * panels_X[0] + x.current}px 0 {-1 *
+                            ? 'none'
+                            : 'block'}; clip-path: inset(0 {1 * panels_X[0] + x.current}px 0 {-1 *
                             panels_X[0] -
                             x.current}px);"
                     >
@@ -876,6 +870,11 @@
                                 onpointerdown={handleMouseDown}
                                 use:pinch
                                 onpinch={doPinch}
+                                use:swipe={{
+                                    timeframe: 300,
+                                    minSwipeDistance: 60,
+                                    touchAction: 'pan-y'
+                                }}
                             >
                                 {#if book?.format === 'html'}
                                     <HtmlBookView {...settingsCache[0] as HtmlBookViewProps} />
@@ -893,7 +892,7 @@
                         style="position: absolute; left: {panels_X[1]}px; height: {Math.abs(
                             panels_X[1] + x.current
                         ) === draggableWidth
-                            ? window.screen.height
+                            ? 0
                             : 'auto'}px; clip-path: inset(0 {1 * panels_X[1] + x.current}px 0 {-1 *
                             panels_X[1] -
                             x.current}px);"
@@ -907,6 +906,11 @@
                                 onpointerdown={handleMouseDown}
                                 use:pinch
                                 onpinch={doPinch}
+                                use:swipe={{
+                                    timeframe: 300,
+                                    minSwipeDistance: 60,
+                                    touchAction: 'pan-y'
+                                }}
                             >
                                 {#if book?.format === 'html'}
                                     <HtmlBookView {...settingsCache[1] as HtmlBookViewProps} />
@@ -921,11 +925,11 @@
 
                     <div
                         class="p-2 w-full overflow-y-hidden"
-                        style="position: absolute; left: {panels_X[2]}px; height: {Math.abs(
+                        style="position: absolute; left: {panels_X[2]}px; display: {Math.abs(
                             panels_X[2] + x.current
                         ) === draggableWidth
-                            ? window.screen.height
-                            : 'auto'}px; clip-path: inset(0 {1 * panels_X[2] + x.current}px 0 {-1 *
+                            ? 'none'
+                            : 'block'}; clip-path: inset(0 {1 * panels_X[2] + x.current}px 0 {-1 *
                             panels_X[2] -
                             x.current}px);"
                     >
@@ -938,6 +942,11 @@
                                 onpointerdown={handleMouseDown}
                                 use:pinch
                                 onpinch={doPinch}
+                                use:swipe={{
+                                    timeframe: 300,
+                                    minSwipeDistance: 60,
+                                    touchAction: 'pan-y'
+                                }}
                             >
                                 {#if book?.format === 'html'}
                                     <HtmlBookView {...settingsCache[2] as HtmlBookViewProps} />
