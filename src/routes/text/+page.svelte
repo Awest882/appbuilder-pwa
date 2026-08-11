@@ -169,8 +169,8 @@
             highlights: Promise.resolve([]),
             references: {
                 ...viewSettings.references,
-                book: viewSettings.references!.prev.book,
-                chapter: viewSettings.references!.prev.chapter
+                book: hasPrev ? viewSettings.references!.prev.book : viewSettings.references!.book,
+                chapter: hasPrev ? viewSettings.references!.prev.chapter : '1'
             }
         };
 
@@ -189,6 +189,7 @@
                 chapter: viewSettings.references!.next.chapter
             }
         };
+
         panels_X[0] = -draggableWidth;
         panels_X[1] = 0;
         panels_X[2] = draggableWidth;
@@ -201,28 +202,32 @@
         adjustPanelX(2, direction);
         if (direction === -1) {
             panels_X = [panels_X[1], panels_X[2], panels_X[0]];
-            idx = panels_X.indexOf(Math.min(...panels_X));
-            settingsCache[idx] = {
-                ...viewSettings, // load in the page before
-                highlights: Promise.resolve([]),
-                references: {
-                    ...viewSettings.references,
-                    book: viewSettings.references!.prev.book,
-                    chapter: viewSettings.references!.prev.chapter
-                }
-            };
+            if (hasPrev) {
+                idx = panels_X.indexOf(Math.min(...panels_X));
+                settingsCache[idx] = {
+                    ...viewSettings, // load in the page before
+                    highlights: Promise.resolve([]),
+                    references: {
+                        ...viewSettings.references,
+                        book: viewSettings.references!.prev.book,
+                        chapter: viewSettings.references!.prev.chapter
+                    }
+                };
+            }
         } else if (direction === 1) {
             panels_X = [panels_X[2], panels_X[0], panels_X[1]];
-            idx = panels_X.indexOf(Math.max(...panels_X));
-            settingsCache[idx] = {
-                ...viewSettings, // load in the next page
-                highlights: Promise.resolve([]),
-                references: {
-                    ...viewSettings.references,
-                    book: viewSettings.references!.next.book,
-                    chapter: viewSettings.references!.next.chapter
-                }
-            };
+            if (hasNext) {
+                idx = panels_X.indexOf(Math.max(...panels_X));
+                settingsCache[idx] = {
+                    ...viewSettings, // load in the next page
+                    highlights: Promise.resolve([]),
+                    references: {
+                        ...viewSettings.references,
+                        book: viewSettings.references!.next.book,
+                        chapter: viewSettings.references!.next.chapter
+                    }
+                };
+            }
         }
         idx = panels_X.indexOf(0);
         settingsCache[idx].highlights = viewSettings.highlights;
@@ -474,8 +479,8 @@
         highlights: Promise.resolve([]),
         references: {
             ...viewSettings.references,
-            book: viewSettings.references!.prev.book,
-            chapter: viewSettings.references!.prev.chapter
+            book: hasPrev ? viewSettings.references!.prev.book : viewSettings.references!.book,
+            chapter: hasPrev ? viewSettings.references!.prev.chapter : '1'
         }
     });
 
@@ -490,8 +495,8 @@
         highlights: Promise.resolve([]),
         references: {
             ...viewSettings.references,
-            book: viewSettings.references!.next.book,
-            chapter: viewSettings.references!.next.chapter
+            book: hasNext ? viewSettings.references!.next.book : viewSettings.references!.book,
+            chapter: hasNext ? viewSettings.references!.next.chapter : '1'
         }
     });
 
@@ -889,11 +894,11 @@
 
                     <div
                         class="p-2 w-full overflow-y-hidden"
-                        style="position: absolute; left: {panels_X[1]}px; height: {Math.abs(
+                        style="position: absolute; left: {panels_X[1]}px; display: {Math.abs(
                             panels_X[1] + x.current
                         ) === draggableWidth
-                            ? 0
-                            : 'auto'}px; clip-path: inset(0 {1 * panels_X[1] + x.current}px 0 {-1 *
+                            ? 'none'
+                            : 'block'}; clip-path: inset(0 {1 * panels_X[1] + x.current}px 0 {-1 *
                             panels_X[1] -
                             x.current}px);"
                     >
