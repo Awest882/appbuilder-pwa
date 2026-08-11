@@ -1073,7 +1073,7 @@ LOGGING:
         return false;
     }
     function findBookmarkElementForVerse(verse, verseRangeSeparator) {
-        const elements = document.querySelectorAll('[id^="bookmarks"]');
+        const elements = container.querySelectorAll('[id^="bookmarks"]');
 
         for (const element of elements) {
             const id = element.id.replace('bookmarks', '');
@@ -1093,7 +1093,7 @@ LOGGING:
         return null; // No matching element found
     }
     function findDataElementForVerse(verse, verseRangeSeparator) {
-        const elements = document.querySelectorAll('[data-verse][data-phrase="a"]');
+        const elements = container.querySelectorAll('[data-verse][data-phrase="a"]');
 
         for (const element of elements) {
             const verseData = element.getAttribute('data-verse');
@@ -1144,7 +1144,7 @@ LOGGING:
                 console.log('Could not find data element for verse', verse);
             }
         } else if (pos === 'top') {
-            const el = document.getElementsByClassName('m')[0];
+            const el = container.getElementsByClassName('m')[0];
             el.insertAdjacentElement('beforebegin', element);
         } else if (pos === 'bottom') {
             const els = container.querySelectorAll('span[id^=bookmarks]');
