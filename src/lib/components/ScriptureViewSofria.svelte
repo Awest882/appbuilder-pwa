@@ -328,6 +328,7 @@ LOGGING:
         if (workspace.inRow) {
             if (workspace.textType.includes('usfm') && workspace.usfmWrapperType === 'xt') {
                 const references = text.split('; ');
+                console.log('Creating Span with onClick listener');
                 for (let i = 0; i < references.length; i++) {
                     var spanV = document.createElement('span');
                     spanV.classList.add('reflink');
@@ -1075,7 +1076,7 @@ LOGGING:
         return false;
     }
     function findBookmarkElementForVerse(verse, verseRangeSeparator) {
-        const elements = document.querySelectorAll('[id^="bookmarks"]');
+        const elements = container.querySelectorAll('[id^="bookmarks"]');
 
         for (const element of elements) {
             const id = element.id.replace('bookmarks', '');

@@ -553,6 +553,44 @@
             ?.books.find((x) => x.id === bookId)?.format;
     }
 
+    const settings0 = $derived({
+        // Initial settings for left panel
+        ...viewSettings,
+        highlights: Promise.resolve([]),
+        references: {
+            ...viewSettings.references,
+            book: hasPrev ? viewSettings.references!.prev.book : viewSettings.references!.book,
+            chapter: hasPrev ? viewSettings.references!.prev.chapter : '1'
+        }
+    });
+
+    const settings1 = $derived({
+        // Initial settings for center panel
+        ...viewSettings
+    });
+
+    const settings2 = $derived({
+        // Initial settings for right panel
+        ...viewSettings,
+        highlights: Promise.resolve([]),
+        references: {
+            ...viewSettings.references,
+            book: hasNext ? viewSettings.references!.next.book : viewSettings.references!.book,
+            chapter: hasNext ? viewSettings.references!.next.chapter : '1'
+        }
+    });
+
+    let settingsCache = $state(
+        // svelte-ignore state_referenced_locally
+        [settings0, settings1, settings2]
+    );
+
+    function getFormat(bcId: string, bookId: string) {
+        return scriptureConfig.bookCollections
+            ?.find((x) => x.id === bcId)
+            ?.books.find((x) => x.id === bookId)?.format;
+    }
+
     const stackSettings = $derived({
         bodyFontSize: $bodyFontSize,
         bodyLineHeight: $bodyLineHeight,

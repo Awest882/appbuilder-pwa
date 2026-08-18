@@ -1,3 +1,4 @@
+
 export function onClickText(e: any, selectedVerses: any, maxSelections: any) {
     let target = e.target;
 
