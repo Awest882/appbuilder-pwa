@@ -145,21 +145,27 @@
     let startX = 0;
     let isDragging = $state(false);
     let draggableWidth = $state(0);
-    let panels_X = $state([0, 0, 0]);
+    let panels_X = $state([-1, 0, 1]);
     let minSlideDistance = () => draggableWidth / 2; // use to determine how far a user has to slide to move to the next chapter
     let minSlideMomentum = 1; // measured in pixels per millisecond
     let lastX = 0;
     let lastTime = 0;
     let momentum = 0;
     let maxMomentum = 0;
-    let previous: string | null = null;
     let transitionDone = true;
 
+    // Update the panels for any updates from different format changes
     $effect(() => {
-        if (previous !== viewSettings.references!.collection) {
-            setupSettingsCache();
+        if (previousSettings.bodyFontSize !== viewSettings.bodyFontSize) {
+        } else if (previousSettings.bodyLineHeight !== viewSettings.bodyLineHeight) {
+        } else if (previousSettings.font !== viewSettings.font) {
+        } else if (previousSettings.themeColors !== viewSettings.themeColors) {
+        } else if (previousSettings.viewShowVerses !== viewSettings.viewShowVerses) {
+        } else {
+            return;
         }
-        previous = viewSettings.references!.collection;
+        setupSettingsCache();
+        previousSettings = { ...viewSettings };
     });
 
     async function setupSettingsCache() {
@@ -167,6 +173,8 @@
             // Initial settings for left panel
             ...viewSettings,
             highlights: Promise.resolve([]),
+            bookmarks: Promise.resolve([]),
+            notes: Promise.resolve([]),
             references: {
                 ...viewSettings.references,
                 book: hasPrev ? viewSettings.references!.prev.book : viewSettings.references!.book,
@@ -183,16 +191,20 @@
             // Initial settings for right panel
             ...viewSettings,
             highlights: Promise.resolve([]),
+            bookmarks: Promise.resolve([]),
+            notes: Promise.resolve([]),
             references: {
                 ...viewSettings.references,
-                book: viewSettings.references!.next.book,
-                chapter: viewSettings.references!.next.chapter
+                book: hasNext ? viewSettings.references!.next.book : viewSettings.references!.book,
+                chapter: hasNext ? viewSettings.references!.next.chapter : '1'
             }
         };
 
-        panels_X[0] = -draggableWidth;
-        panels_X[1] = 0;
-        panels_X[2] = draggableWidth;
+        if (Math.sign(panels_X[0]) > -1) {
+            panels_X[0] = -draggableWidth;
+            panels_X[1] = 0;
+            panels_X[2] = draggableWidth;
+        }
     }
 
     async function adjustSettingsCache(direction: number) {
@@ -207,6 +219,8 @@
                 settingsCache[idx] = {
                     ...viewSettings, // load in the page before
                     highlights: Promise.resolve([]),
+                    bookmarks: Promise.resolve([]),
+                    notes: Promise.resolve([]),
                     references: {
                         ...viewSettings.references,
                         book: viewSettings.references!.prev.book,
@@ -221,6 +235,8 @@
                 settingsCache[idx] = {
                     ...viewSettings, // load in the next page
                     highlights: Promise.resolve([]),
+                    bookmarks: Promise.resolve([]),
+                    notes: Promise.resolve([]),
                     references: {
                         ...viewSettings.references,
                         book: viewSettings.references!.next.book,
@@ -231,6 +247,8 @@
         }
         idx = panels_X.indexOf(0);
         settingsCache[idx].highlights = viewSettings.highlights;
+        settingsCache[idx].bookmarks = viewSettings.bookmarks;
+        settingsCache[idx].notes = viewSettings.notes;
     }
 
     $effect(() => {
@@ -241,6 +259,18 @@
             if (x.current === 0 && transitionDone) {
                 const idx = panels_X.indexOf(0);
                 settingsCache[idx].highlights = highlights;
+            }
+        });
+    });
+
+    $effect(() => {
+        const bookmarks = viewSettings.bookmarks;
+
+        // untrack prevents these reads from becoming dependencies
+        untrack(() => {
+            if (x.current === 0 && transitionDone) {
+                const idx = panels_X.indexOf(0);
+                settingsCache[idx].bookmarks = bookmarks;
             }
         });
     });
@@ -262,8 +292,11 @@
 
     async function handleMouseUp(_event: PointerEvent) {
         isDragging = false;
-        if (!(Math.abs(x.current) < minSlideDistance() && Math.abs(momentum) < minSlideMomentum)) {
-            if (x.current < 0) {
+        if (
+            !(Math.abs(x.current) < minSlideDistance() && Math.abs(momentum) < minSlideMomentum) &&
+            draggableWidth > 0
+        ) {
+            if (x.current < 0 && momentum < 0) {
                 if (hasNext && navigateBetweenBooksNext) {
                     await navigateToTextChapterInDirection(1);
                     await adjustSettingsCache(1);
@@ -322,8 +355,9 @@
     function measure(node: Element) {
         const observer = new ResizeObserver(([entry]) => {
             draggableWidth = entry.contentRect.width;
-            panels_X[0] = -draggableWidth;
-            panels_X[2] = draggableWidth;
+            panels_X = panels_X.map((x) => {
+                return draggableWidth * Math.sign(x);
+            });
         });
 
         observer.observe(node);
@@ -472,11 +506,17 @@
                 } satisfies ScriptureViewSofriaProps)
               : {}
     );
+    let previousSettings = {
+        // svelte-ignore state_referenced_locally
+        ...viewSettings
+    };
 
     const settings0 = $derived({
         // Initial settings for left panel
         ...viewSettings,
         highlights: Promise.resolve([]),
+        bookmarks: Promise.resolve([]),
+        notes: Promise.resolve([]),
         references: {
             ...viewSettings.references,
             book: hasPrev ? viewSettings.references!.prev.book : viewSettings.references!.book,
@@ -493,6 +533,8 @@
         // Initial settings for right panel
         ...viewSettings,
         highlights: Promise.resolve([]),
+        bookmarks: Promise.resolve([]),
+        notes: Promise.resolve([]),
         references: {
             ...viewSettings.references,
             book: hasNext ? viewSettings.references!.next.book : viewSettings.references!.book,
@@ -852,8 +894,7 @@
                 </div>
                 <div
                     class="basis-5/6 max-w-screen-md"
-                    style="position: relative; left: {x.current}px; height: {window.screen
-                        .height}px"
+                    style="position: relative; left: {x.current}px; height: {innerHeight}px"
                     use:measure
                 >
                     <div

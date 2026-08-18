@@ -1,4 +1,3 @@
-
 export function onClickText(e: any, selectedVerses: any, maxSelections: any) {
     let target = e.target;
 
@@ -96,7 +95,12 @@ function modifyClassOfElements(element: HTMLElement, id: string, clsName: string
 }
 
 // Modify class name of HTMLElements id, id+1, id+2, etc.
-function modifyClassOfElement(element: HTMLElement, id: string, clsName: string, select: boolean): boolean {
+function modifyClassOfElement(
+    element: HTMLElement,
+    id: string,
+    clsName: string,
+    select: boolean
+): boolean {
     let found = false;
     let i = 0;
     let el = element.querySelector<HTMLElement>('#' + CSS.escape(id));

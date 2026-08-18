@@ -264,7 +264,9 @@ LOGGING:
     $effect(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         stateSelectedVerses.current;
-        updateSelections(container, selectedVerses);
+        if ($refs.chapter === references.chapter) {
+            updateSelections(container, selectedVerses);
+        }
     });
 
     const countSubheadingPrefixes = (subHeadings: [string], labelPrefix: string) => {
@@ -326,7 +328,6 @@ LOGGING:
         if (workspace.inRow) {
             if (workspace.textType.includes('usfm') && workspace.usfmWrapperType === 'xt') {
                 const references = text.split('; ');
-                console.log('Creating Span with onClick listener');
                 for (let i = 0; i < references.length; i++) {
                     var spanV = document.createElement('span');
                     spanV.classList.add('reflink');
@@ -760,13 +761,13 @@ LOGGING:
         notesInChapter.then((notes) => {
             for (var k = 0; k < notes.length; k++) {
                 const note = notes[k];
-                const bookmarksSpan = document.getElementById('bookmarks' + note.verse);
+                const bookmarksSpan = container.querySelector('#bookmarks' + note.verse);
                 if (!bookmarksSpan) {
                     console.warn('No bookmarks span for verse %s', note.verse);
                     continue;
                 }
 
-                const existingNoteSpan = document.getElementById('note' + k);
+                const existingNoteSpan = container.querySelector('#note' + k);
                 if (!existingNoteSpan) {
                     let noteSpan = document.createElement('span');
                     noteSpan.id = 'note' + k;
@@ -797,13 +798,14 @@ LOGGING:
     function addBookmarkedVerses(bookmarksInChapter) {
         bookmarksInChapter.then((bookmarks) => {
             for (var j = 0; j < bookmarks.length; j++) {
-                const bookmarksSpan = document.getElementById('bookmarks' + bookmarks[j].verse);
+                // const bookmarksSpan = document.getElementById('bookmarks' + bookmarks[j].verse);
+                const bookmarksSpan = container.querySelector(`#bookmarks${bookmarks[j].verse}`);
                 if (!bookmarksSpan) {
                     console.warn('No bookmarks span for verse %s', bookmarks[j].verse);
                     continue;
                 }
 
-                const existingBookmarkSpan = document.getElementById('bookmark' + j);
+                const existingBookmarkSpan = container.querySelector(`#bookmark${j}`);
                 if (!existingBookmarkSpan) {
                     let bookmarkSpan = document.createElement('span');
                     bookmarkSpan.id = 'bookmark' + j;
@@ -1073,7 +1075,7 @@ LOGGING:
         return false;
     }
     function findBookmarkElementForVerse(verse, verseRangeSeparator) {
-        const elements = container.querySelectorAll('[id^="bookmarks"]');
+        const elements = document.querySelectorAll('[id^="bookmarks"]');
 
         for (const element of elements) {
             const id = element.id.replace('bookmarks', '');
@@ -1144,7 +1146,11 @@ LOGGING:
                 console.log('Could not find data element for verse', verse);
             }
         } else if (pos === 'top') {
-            const el = container.getElementsByClassName('m')[0];
+            let els = container.getElementsByClassName('m');
+            if (els.length === 0) {
+                els = container.getElementsByClassName('c');
+            }
+            const el = els[0];
             el.insertAdjacentElement('beforebegin', element);
         } else if (pos === 'bottom') {
             const els = container.querySelectorAll('span[id^=bookmarks]');
